@@ -1,5 +1,6 @@
 ---
 title: Cairo Wheel
+theme: darkly
 execute: 
   echo: false
   warning: false
