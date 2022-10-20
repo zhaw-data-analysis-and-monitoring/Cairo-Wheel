@@ -1,0 +1,120 @@
+---
+title: Cairo Wheel
+execute: 
+  echo: false
+  warning: false
+  message: false
+---
+
+
+```{r}
+#| fig.width: 15.0
+library(dplyr)
+library(ggplot2)
+library(purrr)
+library(tidyr)
+library(stringr)
+library(forcats)
+
+spaceadd <- function(x){
+  if(x>0){
+    paste(rep(" ",x),collapse = "")
+  } else{
+    ""
+  }
+}
+```
+
+```{r}
+#| fig.width: 15.0
+allvals <- readr::read_csv("allvals-HS21.csv")
+
+allvals <- allvals |>
+  fill(InfoVis) |>
+  rename_with(~paste("name", ., sep = "_"), c(Parameter, Antagonist))
+
+allvals_long <- allvals |>
+  mutate(paragroup = paste(name_Parameter, name_Antagonist, sep = "-")) |>
+  pivot_longer(
+    cols = matches("^name|Wert"),
+    names_to = c(".value", "type"), 
+    names_pattern =  "(.+)_(.+)")
+
+levs <- c("Abstraction","Functionality","Density","Multi_d","Originality","Novelty","Figuration","Decoration","Lightness","Uni_d","Familiarity","Redundancy")
+
+allvals_long <- allvals_long |>
+  arrange(Gruppe, InfoVis, type, paragroup) |>
+  mutate(
+    gruppe_nr = readr::parse_number(Gruppe),
+    name = factor(name, levels = levs),
+    name = fct_recode(name, "Multi-D" = "Multi_d", "Uni-D" = "Uni_d"),
+    name_int = as.integer(name)
+    )
+```
+
+```{r}
+
+coord_radar <- function (theta = "x", start = 0, direction = 1) {
+  theta <- match.arg(theta, c("x", "y"))
+  r <- if (theta == "x") "y" else "x"
+  ggproto("CordRadar", CoordPolar, theta = theta, r = r, start = start, 
+          direction = sign(direction),
+          is_linear = function(coord) TRUE)
+}
+
+
+cairo_plot <- function(dataset){
+  
+  bg_color <- "#003d5b"
+  col1 <- "#d1495b"
+  col2 <- "#00798c"
+  col_other <- "#30638e"
+  col_contrast <- "lightgrey"
+  dataset <- arrange(dataset, name_int)
+  dataset <- rbind(head(dataset, 1), dataset)
+  dataset$name_int[1] <- 13
+  
+  dataset <- arrange(dataset, name_int)
+  
+  ggplot(dataset, aes(name_int, Wert, fill = Wert)) +
+    geom_line()+
+    geom_polygon(alpha = 0.8, fill = col_other) +
+    scale_y_continuous(limits = c(0,2), breaks = c(0)) +
+    scale_x_continuous(limits = c(1, 13), breaks = 1:13,expand = expansion()) +
+    geom_label(aes(y = 1.9, label = name, colour = type), fill = col_contrast)  +
+    scale_colour_manual(values = c(col1, col2))+
+    coord_radar(start = 4.974188) +
+    facet_wrap(~Gruppe) +
+    theme(
+      plot.background = element_rect(fill = bg_color),
+      axis.title = element_blank(),
+      axis.text = element_blank(),
+      axis.ticks.y = element_blank(),
+      panel.background = element_rect(fill = "transparent"),
+      panel.grid.minor  = element_blank(),
+      panel.grid.major = element_line(colour = "#8ecae6", linetype = 2,),
+      legend.position = "none",
+      plot.title = element_text(colour = col_contrast)
+      )
+}
+```
+
+```{r}
+plot_char <- unique(allvals_long$InfoVis)
+
+plot_list <- map(plot_char, function(x){
+  p <- filter(allvals_long, InfoVis == plot_char) |>
+  cairo_plot() +
+  labs(title = x)
+
+  ggsave(file.path(paste0(x, ".png")),p, bg = "transparent", height = 20, width = 27, units = "cm")
+
+})
+
+```
+
+![Cairo Wheel Gapminder](GapMinder.png){#fig-gapminder}
+
+![Cairo Wheel Minard](Minard.png){#fig-mindard}
+
+![Cairo Wheel Wind](Wind.png){#fig-wind}
