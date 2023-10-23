@@ -8,14 +8,29 @@ execute:
 ---
 
 
+
 ```{r}
-#| fig.width: 15.0
+# 1. Download the GoogleSheet as an xlx file. Rename it it to CairoWheel.xlsx or
+#    change the name in the code below
+# 2. Adjust the Group numbers in the code below. 
+# 3. Optional: Adjust the number of rows in the facets (nrows)
+# 4. Run the code (locally), view the results. Push the changes to github 
+#    everything, including html files
+
+xlsx_file <- "CairoWheel.xlsx"
+sheets <- paste0("Gruppe",1:8)
+nrows = 2
+```
+
+```{r}
 library(dplyr)
 library(ggplot2)
 library(purrr)
 library(tidyr)
 library(stringr)
 library(forcats)
+library(readxl)
+library(purrr)
 
 spaceadd <- function(x){
   if(x>0){
@@ -26,9 +41,24 @@ spaceadd <- function(x){
 }
 ```
 
+
+```{r}
+
+
+
+allvals <- map_dfr(sheets, \(x){
+  read_xlsx(xlsx_file, x) |>
+    mutate(Gruppe = x)
+})
+
+
+
+```
+
+
 ```{r}
 #| fig.width: 15.0
-allvals <- readr::read_csv("allvals-HS21.csv")
+# allvals <- readr::read_csv("allvals-HS21.csv")
 
 allvals <- allvals |>
   fill(InfoVis) |>
@@ -64,7 +94,7 @@ coord_radar <- function (theta = "x", start = 0, direction = 1) {
 }
 
 
-cairo_plot <- function(dataset){
+cairo_plot <- function(dataset, nrows = NULL){
   
   bg_color <- "#003d5b"
   col1 <- "#d1495b"
@@ -77,23 +107,32 @@ cairo_plot <- function(dataset){
   
   dataset <- arrange(dataset, name_int)
   
-  ggplot(dataset, aes(name_int, Wert, fill = Wert)) +
+  labelpos <- 1.3
+  maxval <- 1.5
+
+  ggplot(dataset, aes(name_int, Wert)) +
     geom_line()+
-    geom_polygon(alpha = 0.8, fill = col_other) +
-    scale_y_continuous(limits = c(0,2), breaks = c(0)) +
-    scale_x_continuous(limits = c(1, 13), breaks = 1:13,expand = expansion()) +
-    geom_label(aes(y = 1.9, label = name, colour = type), fill = col_contrast)  +
-    scale_colour_manual(values = c(col1, col2))+
+    geom_errorbar(aes(ymin = 0, ymax = labelpos), width = 0,colour = "#8ecae6") +
+    # geom_segment(x = 0, xend = 100, y = 0, yend = 1, colour = "red") +
+    # geom_segment(x = 100, xend = -100, y = 0, yend = 0.5, colour = "red") +
+    geom_point() +
     coord_radar(start = 4.974188) +
-    facet_wrap(~Gruppe) +
+    geom_polygon(alpha = 0.8, fill = col_other) +
+    scale_y_continuous(limits = c(0,maxval), breaks = c(0)) +
+    scale_x_continuous(limits = c(1, 13), breaks = 1:13, expand = expansion()) +
+    geom_label(aes(y = labelpos, label = name, fill = type), hjust = 0.5)  +
+    scale_fill_manual(values = c(col1, col2))+
+    facet_wrap(~gruppe_nr, labeller = labeller(gruppe_nr = \(x) paste("Gruppe",x)),nrow = nrows) +
     theme(
       plot.background = element_rect(fill = bg_color),
       axis.title = element_blank(),
       axis.text = element_blank(),
       axis.ticks.y = element_blank(),
+      panel.grid.major.y = element_blank(),
       panel.background = element_rect(fill = "transparent"),
       panel.grid.minor  = element_blank(),
-      panel.grid.major = element_line(colour = "#8ecae6", linetype = 2,),
+      # panel.grid.major = element_line(colour = "#8ecae6", linetype = 2,),
+      panel.grid.major.x = element_blank(),
       legend.position = "none",
       plot.title = element_text(colour = col_contrast)
       )
@@ -104,18 +143,18 @@ cairo_plot <- function(dataset){
 plot_char <- unique(allvals_long$InfoVis)
 
 plot_list <- map(plot_char, function(x){
-  p <- filter(allvals_long, InfoVis == plot_char) |>
-  cairo_plot() +
+  p <- filter(allvals_long, InfoVis == x) |>
+  cairo_plot(nrows = nrows) +
   labs(title = x)
 
-  ggsave(file.path(paste0(x, ".png")),p, bg = "transparent", height = 20, width = 27, units = "cm")
+  ggsave(file.path(paste0(x, ".png")),p, bg = "transparent", height = 35, width = 70, units = "cm")
 
 })
 
 ```
 
-![Cairo Wheel Gapminder](GapMinder.png){#fig-gapminder}
+![Cairo Wheel Gapminder](GapMinder.png){#fig-gapminder .column-screen}
 
-![Cairo Wheel Minard](Minard.png){#fig-mindard}
+![Cairo Wheel Minard](Minard.png){#fig-mindard .column-screen}
 
-![Cairo Wheel Wind](Wind.png){#fig-wind}
+![Cairo Wheel Wind](Wind.png){#fig-wind .column-screen}
