@@ -151,6 +151,8 @@ plot_list <- map(plot_char, function(x){
 
 })
 
+
+
 ```
 
 ![Cairo Wheel Gapminder](GapMinder.png){#fig-gapminder .column-screen}
@@ -158,3 +160,5 @@ plot_list <- map(plot_char, function(x){
 ![Cairo Wheel Minard](Minard.png){#fig-mindard .column-screen}
 
 ![Cairo Wheel Wind](Wind.png){#fig-wind .column-screen}
+
+
