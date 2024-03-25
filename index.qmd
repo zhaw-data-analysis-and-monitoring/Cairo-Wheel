@@ -10,12 +10,12 @@ execute:
 
 
 ```{r}
-# 1. Download the GoogleSheet as an xlx file. Rename it it to CairoWheel.xlsx or
+# 1. Download the GoogleSheet as an xlx file. Rename it it to CairoWheel_XXXX.xlsx and
 #    change the name in the code below
 # 2. Adjust the Group numbers in the code below. 
 # 3. Optional: Adjust the number of rows in the facets (nrows)
 # 4. Run the code (locally), view the results. Push the changes to github 
-#    everything, including html files
+#    (everything, including html files)
 
 xlsx_file <- "CairoWheel_HS23.xlsx"
 sheets <- paste0("Gruppe",1:8)
