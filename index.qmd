@@ -17,9 +17,9 @@ execute:
 # 4. Run the code (locally), view the results. Push the changes to github 
 #    (everything, including html files)
 
-xlsx_file <- "CairoWheel_HS23.xlsx"
-sheets <- paste0("Gruppe",1:8)
-nrows = 2
+xlsx_file <- "CairoWheel_FS24.xlsx"
+sheets <- paste0("Gruppe",1:4)
+nrows = 1
 ```
 
 ```{r}
